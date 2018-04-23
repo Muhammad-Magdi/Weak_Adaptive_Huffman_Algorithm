@@ -4,6 +4,9 @@
 
 using namespace std;
 
+/*
+ * aardva = 000001010001000001100010110
+ */
 const int M = 26, E = 4, R = 10;
 string input, output;
 const char NYT = 0;
@@ -17,28 +20,71 @@ void split(Node*, char);
 string getSymbolCode(char);
 void inOrderTraversal(Node*);
 
+
+int toInteger(string);
+
 Node* root = new Node(EXTERNAL);
+
+int type;
 
 int main() {
 	root->setSymbol(NYT);
-
-	cin >> input;
-	for(char symbol : input){
-		if(root->myChildren.count(symbol)){
-			output += getSymbolPath(root, symbol);
-			Node* cur = getNode(root, symbol);
-			incrementWeights(cur);
-		}else{
-			output += getSymbolPath(root, NYT);
-			if(symbol == 'r')	cout << getSymbolPath(root, NYT) << endl;
-			output += getSymbolCode(symbol);
-			Node* cur = getNode(root, NYT);
-			split(cur, symbol);
-			incrementWeights(cur->getParent());			//The NYT's Parent
+	cout << "Enter The Type of Operation you want make [1=Encode, 2=Decode] : ";
+	cin >> type;
+	if(type == 1) {
+		cout << "Enter the message to be encoded : ";
+		cin >> input;
+		for (char symbol : input) {
+			if (root->myChildren.count(symbol)) {
+				output += getSymbolPath(root, symbol);
+				Node *cur = getNode(root, symbol);
+				incrementWeights(cur);
+			} else {
+				output += getSymbolPath(root, NYT);
+				if (symbol == 'r') cout << getSymbolPath(root, NYT) << endl;
+				output += getSymbolCode(symbol);
+				Node *cur = getNode(root, NYT);
+				split(cur, symbol);
+				incrementWeights(cur->getParent());      //The NYT's Parent
+			}
+			cout << symbol << "*** \n";
+			inOrderTraversal(root);
+			cout << "**********************\n";
 		}
-		cout << symbol << "*** \n";
-		inOrderTraversal(root);
-		cout << "**********************\n";
+	}else{
+		cout << "Enter the code to be decoded : ";
+		cin >> input;
+		Node* cur = root;
+		for(int i = 0 ; i < input.length() ; ){
+			char bit = input[i];
+			bool isInternal = 0;
+			while(!cur->isLeaf){
+				if(bit == '0')	cur = cur->getLeft();
+				else cur = cur->getRight();
+				isInternal = 1;
+				++i;
+			}
+			if(i == (int)input.length()-1)	cout << cur->getSymbol() << endl;
+			if(cur->getSymbol() == NYT){
+				string charCode = input.substr(i, E);
+				int P = toInteger(charCode);
+				if(P < R){
+					charCode = input.substr(i, E+1);
+					P = toInteger(charCode);
+					i += E+1;
+				}else{
+					P += R;
+					i += E;
+				}
+				split(cur, 'a'+P);
+				output += char('a'+P);
+				incrementWeights(cur->getParent());
+			}else{
+				output += cur->getSymbol();
+				incrementWeights(cur);
+			}
+			cur = root;
+		}
 	}
 	cout << output << endl;
 	return 0;
@@ -119,4 +165,15 @@ void inOrderTraversal(Node* cur){
 	inOrderTraversal(cur->getLeft());
 	cout << cur->getSymbol() << " " << cur->getWeight() << endl;
 	inOrderTraversal(cur->getRight());
+}
+
+
+int toInteger(string str){
+	int val = 1;
+	int ret = 0;
+	for(int i = (int)str.length()-1 ; ~i ; --i){
+		ret += (str[i]-'0') * val;
+		val <<= 1;
+	}
+	return ret;
 }
