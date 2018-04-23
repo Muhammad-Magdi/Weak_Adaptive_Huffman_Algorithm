@@ -1,13 +1,15 @@
 #include <iostream>
 #include "Node.h"
 #include <algorithm>
+#include <cmath>
 
 using namespace std;
 
 /*
  * aardva = 000001010001000001100010110
  */
-const int M = 26, E = 4, R = 10;
+int M = 10, E = 4, R = 10;
+char startingChar;
 string input, output;
 const char NYT = 0;
 
@@ -20,7 +22,6 @@ void split(Node*, char);
 string getSymbolCode(char);
 void inOrderTraversal(Node*);
 
-
 int toInteger(string);
 
 Node* root = new Node(EXTERNAL);
@@ -29,6 +30,12 @@ int type;
 
 int main() {
 	root->setSymbol(NYT);
+	cout << "Enter Charset size : ";
+	cin >> M;
+	cout << "Enter The Starting character : ";
+	cin >> startingChar;
+	E = log2(M);
+	R = M-2*E;
 	cout << "Enter The Type of Operation you want make [1=Encode, 2=Decode] : ";
 	cin >> type;
 	if(type == 1) {
@@ -41,30 +48,24 @@ int main() {
 				incrementWeights(cur);
 			} else {
 				output += getSymbolPath(root, NYT);
-				if (symbol == 'r') cout << getSymbolPath(root, NYT) << endl;
 				output += getSymbolCode(symbol);
 				Node *cur = getNode(root, NYT);
 				split(cur, symbol);
 				incrementWeights(cur->getParent());      //The NYT's Parent
 			}
-			cout << symbol << "*** \n";
-			inOrderTraversal(root);
-			cout << "**********************\n";
 		}
 	}else{
 		cout << "Enter the code to be decoded : ";
 		cin >> input;
 		Node* cur = root;
 		for(int i = 0 ; i < input.length() ; ){
-			char bit = input[i];
 			bool isInternal = 0;
 			while(!cur->isLeaf){
-				if(bit == '0')	cur = cur->getLeft();
+				if(input[i] == '0')	cur = cur->getLeft();
 				else cur = cur->getRight();
 				isInternal = 1;
 				++i;
 			}
-			if(i == (int)input.length()-1)	cout << cur->getSymbol() << endl;
 			if(cur->getSymbol() == NYT){
 				string charCode = input.substr(i, E);
 				int P = toInteger(charCode);
@@ -76,8 +77,8 @@ int main() {
 					P += R;
 					i += E;
 				}
-				split(cur, 'a'+P);
-				output += char('a'+P);
+				split(cur, startingChar+P);
+				output += char(startingChar+P);
 				incrementWeights(cur->getParent());
 			}else{
 				output += cur->getSymbol();
@@ -141,7 +142,7 @@ void split(Node* NYT, char symbol){
 }
 
 string getSymbolCode(char symbol){
-	int k = symbol-'a'+1;
+	int k = symbol-startingChar+1;
 	int e = E, val = k-1;
 	if(k <= 2*R)	++e;
 	else	val -= R;
